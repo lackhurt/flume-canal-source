@@ -16,7 +16,7 @@
  */
 package com.weiboyi.etl.flume.source.canal;
 
-public class CanalProps {
+public class CanalConf {
 
     private String zkServers;
     private String destination;

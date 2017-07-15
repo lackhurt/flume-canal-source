@@ -23,16 +23,16 @@ import com.alibaba.otter.canal.protocol.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CanalConsumer {
+public class CanalClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CanalConsumer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CanalClient.class);
 
     private CanalConnector canalConnector;
 
-    public CanalConsumer(CanalProps canalProps) {
-        if (canalProps.getZkServers() != null && !"".equals(canalProps.getZkServers())) {
-            canalConnector = getConnector(canalProps.getZkServers(), canalProps.getDestination(), canalProps.getUsername(), canalProps.getPassword());
-            LOGGER.info(String.format("Cluster connector has been created. Zookeeper is %s, destination is %s", canalProps.getZkServers(), canalProps.getDestination()));
+    public CanalClient(CanalConf canalConf) {
+        if (canalConf.getZkServers() != null && !"".equals(canalConf.getZkServers())) {
+            canalConnector = getConnector(canalConf.getZkServers(), canalConf.getDestination(), canalConf.getUsername(), canalConf.getPassword());
+            LOGGER.info(String.format("Cluster connector has been created. Zookeeper is %s, destination is %s", canalConf.getZkServers(), canalConf.getDestination()));
         }
     }
 

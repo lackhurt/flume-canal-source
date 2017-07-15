@@ -34,36 +34,36 @@ public class CanalSource extends AbstractPollableSource
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CanalSource.class);
 
-    private CanalConsumer canalConsumer = null;
-    private CanalProps canalProps = new CanalProps();
+    private CanalClient canalClient = null;
+    private CanalConf canalConf = new CanalConf();
 
     @Override
     protected void doStart() throws FlumeException {
         LOGGER.info("start...");
 
-        this.canalConsumer = new CanalConsumer(canalProps);
-        this.canalConsumer.start();
+        this.canalClient = new CanalClient(canalConf);
+        this.canalClient.start();
     }
 
     @Override
     protected void doStop() throws FlumeException {
         LOGGER.info("stop...");
-        this.canalConsumer.stop();
+        this.canalClient.stop();
     }
 
     @Override
     protected void doConfigure(Context context) throws FlumeException {
         LOGGER.info("configure...");
 
-        canalProps.setServerUrl(context.getString(CanalSourceConstants.SERVER_URL));
-        canalProps.setServerUrls(context.getString(CanalSourceConstants.SERVER_URLS));
-        canalProps.setZkServers(context.getString(CanalSourceConstants.ZOOKEEPER_SERVERS));
-        canalProps.setDestination(context.getString(CanalSourceConstants.DESTINATION));
-        canalProps.setUsername(context.getString(CanalSourceConstants.USERNAME, CanalSourceConstants.DEFAULT_USERNAME));
-        canalProps.setPassword(context.getString(CanalSourceConstants.PASSWORD, CanalSourceConstants.DEFAULT_PASSWORD));
-        canalProps.setBatchSize(context.getInteger(CanalSourceConstants.BATCH_SIZE, CanalSourceConstants.DEFAULT_BATCH_SIZE));
+        canalConf.setServerUrl(context.getString(CanalSourceConstants.SERVER_URL));
+        canalConf.setServerUrls(context.getString(CanalSourceConstants.SERVER_URLS));
+        canalConf.setZkServers(context.getString(CanalSourceConstants.ZOOKEEPER_SERVERS));
+        canalConf.setDestination(context.getString(CanalSourceConstants.DESTINATION));
+        canalConf.setUsername(context.getString(CanalSourceConstants.USERNAME, CanalSourceConstants.DEFAULT_USERNAME));
+        canalConf.setPassword(context.getString(CanalSourceConstants.PASSWORD, CanalSourceConstants.DEFAULT_PASSWORD));
+        canalConf.setBatchSize(context.getInteger(CanalSourceConstants.BATCH_SIZE, CanalSourceConstants.DEFAULT_BATCH_SIZE));
 
-        if (!canalProps.isConnectionUrlValid()) {
+        if (!canalConf.isConnectionUrlValid()) {
             throw new ConfigurationException(String.format("\"%s\",\"%s\" AND \"%s\" at least one must be specified!",
                     CanalSourceConstants.ZOOKEEPER_SERVERS,
                     CanalSourceConstants.SERVER_URL,
@@ -76,22 +76,35 @@ public class CanalSource extends AbstractPollableSource
 
     @Override
     protected Status doProcess() throws EventDeliveryException {
+        try {
+            LOGGER.info(String.format("Fetch rows from canal, batch size is %d", canalConf.getBatchSize()));
+            Message message = canalClient.fetchRows(canalConf.getBatchSize());
+            LOGGER.info("Fetch successfully");
 
-        LOGGER.info(String.format("Fetch rows from canal, batch size is %d", canalProps.getBatchSize()));
-        Message message = canalConsumer.fetchRows(canalProps.getBatchSize());
-        LOGGER.info("Fetch successfully");
+            if (message != null) {
+                Map<String, String> header = new HashMap<String, String>();
+                header.put("size", String.valueOf(message.getEntries().size()));
+                Event event = EventBuilder.withBody((message.getId() + "" + message.getEntries().size()).getBytes(), header);
 
-        Map<String, String> header = new HashMap<String, String>();
-        header.put("size", String.valueOf(message.getEntries().size()));
-        Event event = EventBuilder.withBody((message.getId() + "" + message.getEntries().size()).getBytes(), header);
+                try {
+                    for (CanalEntry.Entry entry : message.getEntries()) {
+                        getChannelProcessor().processEventBatch(CanalEntryChannelEventConverter.convert(entry));
+                    }
+                } catch (Exception e) {
+                    this.canalClient.rollback(message.getId());
+                    LOGGER.error(String.format("Exceptions occurs when channel processing batch events, message is %s", e.getMessage()));
+                    return Status.BACKOFF;
+                }
 
-        for (CanalEntry.Entry entry : message.getEntries()) {
-            getChannelProcessor().processEventBatch(CanalEntryChannelEventConverter.convert(entry));
+                this.canalClient.ack(message.getId());
+                LOGGER.info(String.format("Canal ack ok, batch id is %d", message.getId()));
+                return Status.READY;
+            } else {
+                return Status.BACKOFF;
+            }
+        } catch (Exception e) {
+            LOGGER.error(String.format("Exceptions occurs when canal client fetching messages, message is %s", e.getMessage()));
+            return Status.BACKOFF;
         }
-
-        this.canalConsumer.ack(message.getId());
-        LOGGER.info(String.format("Canal ack ok, batch id is %d", message.getId()));
-
-        return Status.READY;
     }
 }
