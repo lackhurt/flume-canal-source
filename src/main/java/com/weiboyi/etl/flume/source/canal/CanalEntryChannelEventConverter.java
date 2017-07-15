@@ -64,8 +64,13 @@ public class CanalEntryChannelEventConverter {
                             rowMap.put(column.getName(), column.getValue());
                         }
 
+                        Map<String, Object> eventMap = new HashMap<String, Object>();
+
+                        eventMap.put("table", entry.getHeader().getTableName());
+                        eventMap.put("data", rowMap);
+
                         Gson gson = new Gson();
-                        events.add(EventBuilder.withBody(gson.toJson(rowMap).getBytes(Charset.forName("UTF-8")), header));
+                        events.add(EventBuilder.withBody(gson.toJson(eventMap).getBytes(Charset.forName("UTF-8")), header));
                     }
                 }
             }
