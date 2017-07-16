@@ -16,20 +16,8 @@
  */
 package com.weiboyi.etl.flume.source.canal;
 
-public class CanalSourceConstants {
+public class TestCanalSource {
 
-    public static final String ZOOKEEPER_SERVERS = "zkServers";
-    public static final String SERVER_URL = "serverUrl";
-    public static final String SERVER_URLS = "serverUrls";
-    public static final String DESTINATION = "destination";
-    public static final String USERNAME = "username";
-    public static final String PASSWORD = "password";
-    public static final String BATCH_SIZE = "batchSize";
-    public static final String FILTER = "filter";
-
-    public static final int DEFAULT_BATCH_SIZE = 1024;
-    public static final String DEFAULT_USERNAME = "";
-    public static final String DEFAULT_PASSWORD = "";
 
 
 }

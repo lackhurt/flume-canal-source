@@ -25,6 +25,7 @@ public class CanalConf {
     private int batchSize;
     private String serverUrl;
     private String serverUrls;
+    private String filter;
 
     public String getZkServers() {
         return zkServers;
@@ -80,6 +81,14 @@ public class CanalConf {
 
     public void setServerUrls(String serverUrls) {
         this.serverUrls = serverUrls;
+    }
+
+    public String getFilter() {
+        return filter;
+    }
+
+    public void setFilter(String filter) {
+        this.filter = filter;
     }
 
     public boolean isConnectionUrlValid() {

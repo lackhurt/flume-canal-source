@@ -28,8 +28,10 @@ public class CanalClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(CanalClient.class);
 
     private CanalConnector canalConnector;
+    private CanalConf canalConf;
 
     public CanalClient(CanalConf canalConf) {
+        this.canalConf = canalConf;
         if (canalConf.getZkServers() != null && !"".equals(canalConf.getZkServers())) {
             canalConnector = getConnector(canalConf.getZkServers(), canalConf.getDestination(), canalConf.getUsername(), canalConf.getPassword());
             LOGGER.info(String.format("Cluster connector has been created. Zookeeper is %s, destination is %s", canalConf.getZkServers(), canalConf.getDestination()));
@@ -38,7 +40,11 @@ public class CanalClient {
 
     public void start() {
         this.canalConnector.connect();
-        this.canalConnector.subscribe();
+        this.canalConnector.subscribe(this.canalConf.getFilter());
+    }
+
+    public Message fetchRows() {
+        return fetchRows(this.canalConf.getBatchSize());
     }
 
     public Message fetchRows(int batchSize) {

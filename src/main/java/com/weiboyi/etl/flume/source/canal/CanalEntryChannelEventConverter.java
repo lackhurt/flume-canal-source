@@ -43,7 +43,7 @@ public class CanalEntryChannelEventConverter {
             try {
                 rowChage = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
             } catch (Exception e) {
-                LOGGER.error("parse event has an error , data:" + entry.toString(), e);
+                LOGGER.warn("parse event has an error , data:" + entry.toString(), e);
                 throw new RuntimeException("parse event has an error , data:" + entry.toString(), e);
             }
 

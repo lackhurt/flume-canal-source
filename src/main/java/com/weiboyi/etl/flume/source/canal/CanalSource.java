@@ -61,6 +61,7 @@ public class CanalSource extends AbstractPollableSource
         canalConf.setDestination(context.getString(CanalSourceConstants.DESTINATION));
         canalConf.setUsername(context.getString(CanalSourceConstants.USERNAME, CanalSourceConstants.DEFAULT_USERNAME));
         canalConf.setPassword(context.getString(CanalSourceConstants.PASSWORD, CanalSourceConstants.DEFAULT_PASSWORD));
+        canalConf.setFilter(context.getString(CanalSourceConstants.FILTER));
         canalConf.setBatchSize(context.getInteger(CanalSourceConstants.BATCH_SIZE, CanalSourceConstants.DEFAULT_BATCH_SIZE));
 
         if (!canalConf.isConnectionUrlValid()) {
@@ -69,8 +70,6 @@ public class CanalSource extends AbstractPollableSource
                     CanalSourceConstants.SERVER_URL,
                     CanalSourceConstants.SERVER_URLS));
         }
-
-        LOGGER.info(context.getString("test"));
     }
 
 
@@ -82,17 +81,13 @@ public class CanalSource extends AbstractPollableSource
             LOGGER.info("Fetch successfully");
 
             if (message != null) {
-                Map<String, String> header = new HashMap<String, String>();
-                header.put("size", String.valueOf(message.getEntries().size()));
-                Event event = EventBuilder.withBody((message.getId() + "" + message.getEntries().size()).getBytes(), header);
-
                 try {
                     for (CanalEntry.Entry entry : message.getEntries()) {
                         getChannelProcessor().processEventBatch(CanalEntryChannelEventConverter.convert(entry));
                     }
                 } catch (Exception e) {
                     this.canalClient.rollback(message.getId());
-                    LOGGER.error(String.format("Exceptions occurs when channel processing batch events, message is %s", e.getMessage()));
+                    LOGGER.warn(String.format("Exceptions occurs when channel processing batch events, message is %s", e.getMessage()));
                     return Status.BACKOFF;
                 }
 
@@ -103,7 +98,7 @@ public class CanalSource extends AbstractPollableSource
                 return Status.BACKOFF;
             }
         } catch (Exception e) {
-            LOGGER.error(String.format("Exceptions occurs when canal client fetching messages, message is %s", e.getMessage()));
+            LOGGER.warn(String.format("Exceptions occurs when canal client fetching messages, message is %s", e.getMessage()));
             return Status.BACKOFF;
         }
     }
