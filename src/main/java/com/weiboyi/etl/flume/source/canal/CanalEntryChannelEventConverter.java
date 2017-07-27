@@ -19,6 +19,8 @@ package com.weiboyi.etl.flume.source.canal;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
@@ -33,17 +35,32 @@ import java.util.Map;
 public class CanalEntryChannelEventConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CanalEntryChannelEventConverter.class);
+    private static Gson gson = new Gson();
+    private static String lastTransactionId = "NONE";
 
     public static List<Event> convert(CanalEntry.Entry entry) {
 
         List<Event> events = new ArrayList<Event>();
+
+        if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND) {
+            CanalEntry.TransactionEnd end = null;
+            try {
+                end = CanalEntry.TransactionEnd.parseFrom(entry.getStoreValue());
+            } catch (InvalidProtocolBufferException e) {
+                LOGGER.warn("parse transaction end event has an error , data:" +  entry.toString());
+                throw new RuntimeException("parse event has an error , data:" + entry.toString(), e);
+            }
+
+            lastTransactionId = end.getTransactionId();
+            LOGGER.info("Transaction Id :" + end.getTransactionId());
+        }
 
         if (entry.getEntryType() == CanalEntry.EntryType.ROWDATA) {
             CanalEntry.RowChange rowChage = null;
             try {
                 rowChage = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
             } catch (Exception e) {
-                LOGGER.warn("parse event has an error , data:" + entry.toString(), e);
+                LOGGER.warn("parse row data event has an error , data:" + entry.toString(), e);
                 throw new RuntimeException("parse event has an error , data:" + entry.toString(), e);
             }
 
@@ -59,18 +76,22 @@ public class CanalEntryChannelEventConverter {
                     if (eventType != CanalEntry.EventType.DELETE) {
 
                         Map<String, Object> rowMap = new HashMap<String, Object>();
+                        Map<String, Object> eventMap = new HashMap<String, Object>();
 
                         for(CanalEntry.Column column : rowData.getAfterColumnsList()) {
                             rowMap.put(column.getName(), column.getValue());
+                            if (column.getIsKey()) {
+                                eventMap.put("pk", column.getValue());
+                            }
                         }
 
-                        Map<String, Object> eventMap = new HashMap<String, Object>();
-
                         eventMap.put("table", entry.getHeader().getTableName());
+                        eventMap.put("ts", Math.round(entry.getHeader().getExecuteTime() / 1000));
+                        eventMap.put("database", entry.getHeader().getSchemaName());
                         eventMap.put("data", rowMap);
+//                        eventMap.put("lastTid", lastTransactionId);
 
-                        Gson gson = new Gson();
-                        events.add(EventBuilder.withBody(gson.toJson(eventMap).getBytes(Charset.forName("UTF-8")), header));
+                        events.add(EventBuilder.withBody(gson.toJson(eventMap, new TypeToken<Map<String, Object>>(){}.getType()).getBytes(Charset.forName("UTF-8")), header));
                     }
                 }
             }

@@ -40,7 +40,7 @@ public class CanalClient {
 
     public void start() {
         this.canalConnector.connect();
-        this.canalConnector.subscribe(this.canalConf.getFilter());
+        this.canalConnector.subscribe();
     }
 
     public Message fetchRows() {
@@ -57,7 +57,7 @@ public class CanalClient {
 
         if (batchId == -1 || size == 0) {
 
-            LOGGER.info("batch - {} 没有获取到数据, 线程短暂sleep", batchId);
+            LOGGER.info("batch - {} 没有获取到数据", batchId);
             return null;
 
         } else {
