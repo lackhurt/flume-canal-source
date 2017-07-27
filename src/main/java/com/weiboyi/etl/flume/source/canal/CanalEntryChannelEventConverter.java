@@ -36,26 +36,31 @@ public class CanalEntryChannelEventConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CanalEntryChannelEventConverter.class);
     private static Gson gson = new Gson();
-    private static String lastTransactionId = "NONE";
+    private static Long numberInTransaction = 0l;
 
     public static List<Event> convert(CanalEntry.Entry entry) {
 
         List<Event> events = new ArrayList<Event>();
 
-        if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND) {
-            CanalEntry.TransactionEnd end = null;
-            try {
-                end = CanalEntry.TransactionEnd.parseFrom(entry.getStoreValue());
-            } catch (InvalidProtocolBufferException e) {
-                LOGGER.warn("parse transaction end event has an error , data:" +  entry.toString());
-                throw new RuntimeException("parse event has an error , data:" + entry.toString(), e);
+        if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND
+                || entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONBEGIN) {
+
+            CanalEntryChannelEventConverter.numberInTransaction = 0l;
+
+            if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND) {
+                CanalEntry.TransactionEnd end = null;
+                try {
+                    end = CanalEntry.TransactionEnd.parseFrom(entry.getStoreValue());
+                } catch (InvalidProtocolBufferException e) {
+                    LOGGER.warn("parse transaction end event has an error , data:" +  entry.toString());
+                    throw new RuntimeException("parse event has an error , data:" + entry.toString(), e);
+                }
             }
 
-            lastTransactionId = end.getTransactionId();
-            LOGGER.info("Transaction Id :" + end.getTransactionId());
         }
 
         if (entry.getEntryType() == CanalEntry.EntryType.ROWDATA) {
+
             CanalEntry.RowChange rowChage = null;
             try {
                 rowChage = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
@@ -69,8 +74,6 @@ public class CanalEntryChannelEventConverter {
             if (eventType == CanalEntry.EventType.QUERY || rowChage.getIsDdl()) {
 
             } else {
-                Map<String, String> header = new HashMap<String, String>();
-                header.put("table", entry.getHeader().getTableName());
 
                 for (CanalEntry.RowData rowData : rowChage.getRowDatasList()) {
                     if (eventType != CanalEntry.EventType.DELETE) {
@@ -89,9 +92,13 @@ public class CanalEntryChannelEventConverter {
                         eventMap.put("ts", Math.round(entry.getHeader().getExecuteTime() / 1000));
                         eventMap.put("database", entry.getHeader().getSchemaName());
                         eventMap.put("data", rowMap);
-//                        eventMap.put("lastTid", lastTransactionId);
+
+                        Map<String, String> header = new HashMap<String, String>();
+                        header.put("table", entry.getHeader().getTableName());
+                        header.put("noInTransaction", String.valueOf(CanalEntryChannelEventConverter.numberInTransaction));
 
                         events.add(EventBuilder.withBody(gson.toJson(eventMap, new TypeToken<Map<String, Object>>(){}.getType()).getBytes(Charset.forName("UTF-8")), header));
+                        CanalEntryChannelEventConverter.numberInTransaction++;
                     }
                 }
             }
