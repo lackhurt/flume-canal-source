@@ -26,6 +26,7 @@ public class CanalConf {
     private String serverUrl;
     private String serverUrls;
     private String filter;
+    private Boolean oldDataRequired;
 
     public String getZkServers() {
         return zkServers;
@@ -89,6 +90,14 @@ public class CanalConf {
 
     public void setFilter(String filter) {
         this.filter = filter;
+    }
+
+    public Boolean getOldDataRequired() {
+        return oldDataRequired;
+    }
+
+    public void setOldDataRequired(Boolean oldDataRequired) {
+        this.oldDataRequired = oldDataRequired;
     }
 
     public boolean isConnectionUrlValid() {

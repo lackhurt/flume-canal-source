@@ -63,6 +63,7 @@ public class CanalSource extends AbstractPollableSource
         canalConf.setPassword(context.getString(CanalSourceConstants.PASSWORD, CanalSourceConstants.DEFAULT_PASSWORD));
         canalConf.setFilter(context.getString(CanalSourceConstants.FILTER));
         canalConf.setBatchSize(context.getInteger(CanalSourceConstants.BATCH_SIZE, CanalSourceConstants.DEFAULT_BATCH_SIZE));
+        canalConf.setOldDataRequired(context.getBoolean(CanalSourceConstants.OLD_DATA_REQUIRED, CanalSourceConstants.DEFAULT_OLD_DATA_REQUIRED));
 
         if (!canalConf.isConnectionUrlValid()) {
             throw new ConfigurationException(String.format("\"%s\",\"%s\" AND \"%s\" at least one must be specified!",
@@ -83,7 +84,7 @@ public class CanalSource extends AbstractPollableSource
             if (message != null) {
                 try {
                     for (CanalEntry.Entry entry : message.getEntries()) {
-                        getChannelProcessor().processEventBatch(CanalEntryChannelEventConverter.convert(entry));
+                        getChannelProcessor().processEventBatch(CanalEntryChannelEventConverter.convert(entry, canalConf.getOldDataRequired()));
                     }
                 } catch (Exception e) {
                     this.canalClient.rollback(message.getId());

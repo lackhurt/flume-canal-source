@@ -26,10 +26,14 @@ public class CanalSourceConstants {
     public static final String PASSWORD = "password";
     public static final String BATCH_SIZE = "batchSize";
     public static final String FILTER = "filter";
+    public static final String OLD_DATA_REQUIRED = "oldDataRequired";
 
     public static final int DEFAULT_BATCH_SIZE = 1024;
     public static final String DEFAULT_USERNAME = "";
     public static final String DEFAULT_PASSWORD = "";
+    public static final boolean DEFAULT_OLD_DATA_REQUIRED = true;
+
+
 
 
 }

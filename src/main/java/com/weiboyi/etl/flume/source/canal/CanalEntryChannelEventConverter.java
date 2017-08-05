@@ -39,7 +39,7 @@ public class CanalEntryChannelEventConverter {
     private static Gson gson = new Gson();
     private static Long numberInTransaction = 0l;
 
-    public static List<Event> convert(CanalEntry.Entry entry) {
+    public static List<Event> convert(CanalEntry.Entry entry, Boolean oldDataRequired) {
 
         List<Event> events = new ArrayList<Event>();
 
@@ -62,28 +62,33 @@ public class CanalEntryChannelEventConverter {
 
         if (entry.getEntryType() == CanalEntry.EntryType.ROWDATA) {
 
-            CanalEntry.RowChange rowChage = null;
+            CanalEntry.RowChange rowChange = null;
             try {
-                rowChage = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
+                rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
             } catch (Exception e) {
                 LOGGER.warn("parse row data event has an error , data:" + entry.toString(), e);
                 throw new RuntimeException("parse event has an error , data:" + entry.toString(), e);
             }
 
-            CanalEntry.EventType eventType = rowChage.getEventType();
+            CanalEntry.EventType eventType = rowChange.getEventType();
 
-            if (eventType == CanalEntry.EventType.QUERY || rowChage.getIsDdl()) {
+            if (eventType == CanalEntry.EventType.QUERY || rowChange.getIsDdl()) {
 
             } else {
 
-                for (CanalEntry.RowData rowData : rowChage.getRowDatasList()) {
+                for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
                     if (eventType != CanalEntry.EventType.DELETE) {
 
-                        Map<String, Object> rowMap = new HashMap<String, Object>();
                         Map<String, Object> eventMap = new HashMap<String, Object>();
 
+                        Map<String, Object> rowMap = convertColumnListToMap(rowData.getAfterColumnsList());
+
+                        if (oldDataRequired) {
+                            Map<String, Object> beforeRowMap = convertColumnListToMap(rowData.getBeforeColumnsList());
+                            eventMap.put("old", beforeRowMap);
+                        }
+
                         for(CanalEntry.Column column : rowData.getAfterColumnsList()) {
-                            rowMap.put(column.getName(), column.getValue());
                             if (column.getIsKey()) {
                                 eventMap.put("pk", column.getValue());
                             }
@@ -93,11 +98,13 @@ public class CanalEntryChannelEventConverter {
                         eventMap.put("ts", Math.round(entry.getHeader().getExecuteTime() / 1000));
                         eventMap.put("database", entry.getHeader().getSchemaName());
                         eventMap.put("data", rowMap);
+                        eventMap.put("type", eventType.toString());
+
 
                         Map<String, String> header = new HashMap<String, String>();
                         header.put("table", entry.getHeader().getTableName());
 
-                        header.put("noInTransaction", String.valueOf(CanalEntryChannelEventConverter.numberInTransaction));
+                        header.put("numInTransaction", String.valueOf(CanalEntryChannelEventConverter.numberInTransaction));
 
                         // 数量超过阈值认为是低优先级
                         header.put("priority", CanalEntryChannelEventConverter.numberInTransaction <= HIGH_PRIORITY_LIMIT ? "high" : "low");
@@ -111,5 +118,16 @@ public class CanalEntryChannelEventConverter {
         }
 
         return events;
+    }
+
+
+    private static Map<String, Object> convertColumnListToMap(List<CanalEntry.Column> columns) {
+        Map<String, Object> rowMap = new HashMap<String, Object>();
+
+        for(CanalEntry.Column column : columns) {
+            rowMap.put(column.getName(), column.getValue());
+        }
+
+        return rowMap;
     }
 }
