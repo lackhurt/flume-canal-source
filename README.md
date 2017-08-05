@@ -45,7 +45,7 @@ agent.sources.canalSource.type = com.weiboyi.etl.flume.source.canal.CanalSource
 agent.sources.canalSource.zkServers = zookeeperhost:2181
 
 # canal destination
-agent.sources.canalSource.destination = destinatino
+agent.sources.canalSource.destination = destination
 
 # agent.sources.canalSource.username = user
 # agent.sources.canalSource.password = passwd
