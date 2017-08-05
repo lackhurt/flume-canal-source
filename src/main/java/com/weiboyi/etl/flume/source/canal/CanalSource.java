@@ -77,9 +77,9 @@ public class CanalSource extends AbstractPollableSource
     @Override
     protected Status doProcess() throws EventDeliveryException {
         try {
-            LOGGER.info(String.format("Fetch rows from canal, batch size is %d", canalConf.getBatchSize()));
+//            LOGGER.info(String.format("Fetch rows from canal, batch size is %d", canalConf.getBatchSize()));
             Message message = canalClient.fetchRows(canalConf.getBatchSize());
-            LOGGER.info("Fetch successfully");
+//            LOGGER.info("Fetch successfully");
 
             if (message != null) {
                 try {

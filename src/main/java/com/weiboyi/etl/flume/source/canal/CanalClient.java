@@ -57,11 +57,11 @@ public class CanalClient {
 
         if (batchId == -1 || size == 0) {
 
-            LOGGER.info("batch - {} 没有获取到数据", batchId);
+//            LOGGER.info("batch - {} 没有获取到数据", batchId);
             return null;
 
         } else {
-            LOGGER.info("batch - {} 获取数据成功, size: {}", batchId, size);
+            LOGGER.info("batch - {} data fetched successful, size is {}", batchId, size);
             return message;
         }
 

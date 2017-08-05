@@ -31,3 +31,27 @@ https://github.com/alibaba/canal
 ## flume-canal-source 做了什么
 flume-canal-source 是对flume的source扩展。从canal获取数据到flume channel。
 进而可以实现binlog数据到kafka/hdfs/hive/elasticsearch等等。
+
+## 如何使用
+
+下面是flume - source 配置
+```properties
+agent.sources = canalSource
+
+agent.sources.canalSource.type = com.weiboyi.etl.flume.source.canal.CanalSource
+
+
+# zookeeper servers
+agent.sources.canalSource.zkServers = zookeeperhost:2181
+
+# canal destination
+agent.sources.canalSource.destination = destinatino
+
+# agent.sources.canalSource.username = user
+# agent.sources.canalSource.password = passwd
+
+# binlog batch size, default is 1024
+agent.sources.canalSource.batchSize = 1024
+
+# 是否需要修改前的数据
+agent.sources.canalSource.oldDataRequired = true
