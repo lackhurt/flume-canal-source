@@ -107,7 +107,7 @@ public class CanalEntryChannelEventConverter {
                         header.put("numInTransaction", String.valueOf(CanalEntryChannelEventConverter.numberInTransaction));
 
                         // 数量超过阈值认为是低优先级
-                        header.put("priority", CanalEntryChannelEventConverter.numberInTransaction <= HIGH_PRIORITY_LIMIT ? "high" : "low");
+                        header.put("priority", CanalEntryChannelEventConverter.numberInTransaction < HIGH_PRIORITY_LIMIT ? "high" : "low");
 
 
                         events.add(EventBuilder.withBody(gson.toJson(eventMap, new TypeToken<Map<String, Object>>(){}.getType()).getBytes(Charset.forName("UTF-8")), header));
