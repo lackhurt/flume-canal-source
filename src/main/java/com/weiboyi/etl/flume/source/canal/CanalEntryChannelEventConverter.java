@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +82,6 @@ public class CanalEntryChannelEventConverter {
                     Map<String, Object> eventMap = new HashMap<String, Object>();
 
                     Map<String, Object> rowMap = convertColumnListToMap(rowData.getAfterColumnsList());
-
                     if (oldDataRequired) {
                         Map<String, Object> beforeRowMap = convertColumnListToMap(rowData.getBeforeColumnsList());
                         eventMap.put("old", beforeRowMap);
@@ -113,7 +113,6 @@ public class CanalEntryChannelEventConverter {
                     CanalEntryChannelEventConverter.numberInTransaction++;
 
                     LOGGER.info(gson.toJson(rowMap));
-
                 }
             }
         }
@@ -126,12 +125,120 @@ public class CanalEntryChannelEventConverter {
         Map<String, Object> rowMap = new HashMap<String, Object>();
 
         for(CanalEntry.Column column : columns) {
-//            column.getMysqlType();
-//            column.newBuilderForType().build().
-//            column.getSqlType();
-            rowMap.put(column.getName(), column.getValue());
+            String fieldName = column.getName();
+            int sqlType = column.getSqlType();
+
+            String stringValue = column.getValue();
+            Object colValue;
+
+            try {
+                switch (sqlType) {
+                    case Types.NULL: {
+                        colValue = stringValue;
+                        LOGGER.warn("JDBC type {} not currently supported", sqlType);
+                        break;
+                    }
+
+                    case Types.BOOLEAN: {
+                        colValue = Boolean.parseBoolean(stringValue);
+                        break;
+                    }
+
+                    // ints <= 8 bits
+                    case Types.BIT:
+                    case Types.TINYINT: {
+                        colValue = new Integer(stringValue).byteValue();
+                        break;
+                    }
+                    // 16 bit ints
+                    case Types.SMALLINT: {
+                        colValue = Short.parseShort(stringValue);
+                        break;
+                    }
+
+                    // 32 bit ints
+                    case Types.INTEGER: {
+                        colValue = Integer.parseInt(stringValue);
+                        break;
+                    }
+
+                    // 64 bit ints
+                    case Types.BIGINT: {
+                        colValue = Long.parseLong(stringValue);
+                        break;
+                    }
+
+                    // REAL is a single precision floating point value, i.e. a Java float
+                    case Types.REAL: {
+                        colValue = Float.parseFloat(stringValue);
+                        break;
+                    }
+
+                    // FLOAT is, confusingly, double precision and effectively the same as DOUBLE. See REAL
+                    // for single precision
+                    case Types.FLOAT:
+                    case Types.DOUBLE: {
+                        colValue = Double.parseDouble(stringValue);
+                        break;
+                    }
+
+                    case Types.NUMERIC:
+                    case Types.DECIMAL: {
+//                SchemaBuilder fieldBuilder = Decimal.builder(metadata.getScale(col));
+//                if (optional) {
+//                    fieldBuilder.optional();
+//                }
+//                builder.field(fieldName, fieldBuilder.build());
+                        colValue = stringValue;
+                        break;
+                    }
+
+                    case Types.CHAR:
+                    case Types.VARCHAR:
+                    case Types.LONGVARCHAR:
+                    case Types.CLOB:
+                    case Types.DATALINK:
+
+                        // Binary == fixed bytes
+                        // BLOB, VARBINARY, LONGVARBINARY == bytes
+                    case Types.BINARY:
+                    case Types.BLOB:
+                    case Types.VARBINARY:
+                    case Types.LONGVARBINARY: {
+                        colValue = stringValue;
+                        break;
+                    }
+
+                    // Date is day + moth + year
+                    case Types.DATE:
+                    case Types.TIME:
+                    case Types.TIMESTAMP: {
+                        colValue = stringValue;
+                        break;
+                    }
+
+                    case Types.ARRAY:
+                    case Types.JAVA_OBJECT:
+                    case Types.OTHER:
+                    case Types.DISTINCT:
+                    case Types.STRUCT:
+                    case Types.REF:
+                    default: {
+                        LOGGER.warn("JDBC type {} not currently supported", sqlType);
+                        colValue = stringValue;
+                        break;
+                    }
+                }
+            } catch (NumberFormatException numberFormatException) {
+                colValue = null;
+            } catch (Exception exception) {
+                LOGGER.warn("convert row data exception", exception);
+                colValue = null;
+            }
+            rowMap.put(column.getName(), colValue);
         }
 
         return rowMap;
     }
+
 }
