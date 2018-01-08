@@ -111,8 +111,6 @@ public class CanalEntryChannelEventConverter {
 
                     events.add(EventBuilder.withBody(gson.toJson(eventMap, new TypeToken<Map<String, Object>>(){}.getType()).getBytes(Charset.forName("UTF-8")), header));
                     CanalEntryChannelEventConverter.numberInTransaction++;
-
-                    LOGGER.info(gson.toJson(rowMap));
                 }
             }
         }
