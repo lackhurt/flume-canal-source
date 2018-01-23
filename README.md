@@ -17,9 +17,9 @@ specific language governing permissions and limitations
 under the License.
 -->
 # flume-canal-source
-**Flume version : 1.7.0**
+**flume version : 1.7.0**
 
-**Canal version : 1.0.24**
+**canal version : 1.0.24**
 ## flume 是什么
 https://flume.apache.org/
 > Flume is a distributed, reliable, and available service for efficiently collecting, aggregating, and moving large amounts of log data. It has a simple and flexible architecture based on streaming data flows. It is robust and fault tolerant with tunable reliability mechanisms and many failover and recovery mechanisms. It uses a simple extensible data model that allows for online analytic application.
@@ -30,8 +30,8 @@ https://github.com/alibaba/canal
 > 阿里巴巴mysql数据库binlog的增量订阅&消费组件
 
 ## flume-canal-source 做了什么
-flume-canal-source 是对flume的source扩展。从canal获取数据到flume channel。
-进而可以实现binlog数据到kafka/hdfs/hive/elasticsearch等等。
+flume-canal-source 是对 flume 的 source 扩展。从 canal 获取数据到 flume channel。
+进而可以实现binlog数据到 kafka / hdfs / hive / elasticsearch 等等。
 canal 和 flume 都有高可用的解决方案，这种方式同步 binlog 可用性非常高。
 
 ## 如何使用
@@ -49,7 +49,7 @@ agent.sources.canalSource.type = com.weiboyi.etl.flume.source.canal.CanalSource
 - 配置连接 canal 的三种方式*
 
 
-1. canal zookeeper servers
+1. zookeeper servers
 ```properties
 agent.sources.canalSource.zkServers = zookeeper-host:2181
 ```
