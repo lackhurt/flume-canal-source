@@ -35,7 +35,7 @@ flume-canal-source 是对flume的source扩展。从canal获取数据到flume cha
 canal 和 flume 都有高可用的解决方案，这种方式同步 binlog 可用性非常高。
 
 ## 如何使用
-部署 canal，flume 这里忽略。
+部署 canal、flume 这里忽略。
 
 ### 配置 flume
 
