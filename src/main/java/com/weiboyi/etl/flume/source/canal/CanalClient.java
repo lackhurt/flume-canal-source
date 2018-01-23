@@ -20,8 +20,13 @@ package com.weiboyi.etl.flume.source.canal;
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.client.CanalConnectors;
 import com.alibaba.otter.canal.protocol.Message;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.List;
 
 public class CanalClient {
 
@@ -30,11 +35,16 @@ public class CanalClient {
     private CanalConnector canalConnector;
     private CanalConf canalConf;
 
-    public CanalClient(CanalConf canalConf) {
+    public CanalClient(CanalConf canalConf) throws ServerUrlsFormatException {
         this.canalConf = canalConf;
-        if (canalConf.getZkServers() != null && !"".equals(canalConf.getZkServers())) {
-            canalConnector = getConnector(canalConf.getZkServers(), canalConf.getDestination(), canalConf.getUsername(), canalConf.getPassword());
-            LOGGER.info(String.format("Cluster connector has been created. Zookeeper is %s, destination is %s", canalConf.getZkServers(), canalConf.getDestination()));
+        if (StringUtils.isNotEmpty(canalConf.getZkServers())) {
+            this.canalConnector = getConnector(canalConf.getZkServers(), canalConf.getDestination(), canalConf.getUsername(), canalConf.getPassword());
+            LOGGER.trace(String.format("Cluster connector has been created. Zookeeper servers are %s, destination is %s", canalConf.getZkServers(), canalConf.getDestination()));
+        } else if (StringUtils.isNotEmpty(canalConf.getServerUrls())) {
+            this.canalConnector = getConnector(CanalConf.convertUrlsToSocketAddressList(canalConf.getServerUrls()), canalConf.getDestination(), canalConf.getUsername(), canalConf.getPassword());
+            LOGGER.trace(String.format("Cluster connector has been created. Server urls are %s, destination is %s", canalConf.getServerUrls(), canalConf.getDestination()));
+        } else if (StringUtils.isNotEmpty(canalConf.getServerUrl())) {
+            this.canalConnector = getConnector(CanalConf.convertUrlToSocketAddress(canalConf.getServerUrl()), canalConf.getDestination(), canalConf.getUsername(), canalConf.getPassword());
         }
     }
 
@@ -81,5 +91,15 @@ public class CanalClient {
 
     private CanalConnector getConnector(String zkServers, String destination, String username, String password) {
         return CanalConnectors.newClusterConnector(zkServers, destination, username, password);
+    }
+
+    private CanalConnector getConnector(List<? extends SocketAddress> addresses, String destination,
+                                        String username, String password) {
+        return CanalConnectors.newClusterConnector(addresses, destination, username, password);
+    }
+
+    private CanalConnector getConnector(SocketAddress address, String destination, String username,
+                                        String password) {
+        return CanalConnectors.newSingleConnector(address, destination, username, password);
     }
 }

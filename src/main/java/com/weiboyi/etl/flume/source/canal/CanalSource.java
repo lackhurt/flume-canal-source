@@ -39,10 +39,16 @@ public class CanalSource extends AbstractPollableSource
 
     @Override
     protected void doStart() throws FlumeException {
-        LOGGER.info("start...");
+        LOGGER.trace("start...");
 
-        this.canalClient = new CanalClient(canalConf);
-        this.canalClient.start();
+        try {
+            this.canalClient = new CanalClient(canalConf);
+            this.canalClient.start();
+        } catch (ServerUrlsFormatException exception) {
+            LOGGER.error(exception.getMessage(), exception);
+
+            throw new FlumeException(exception);
+        }
     }
 
     @Override

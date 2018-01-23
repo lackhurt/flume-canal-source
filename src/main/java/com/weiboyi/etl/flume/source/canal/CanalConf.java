@@ -16,6 +16,16 @@
  */
 package com.weiboyi.etl.flume.source.canal;
 
+import org.apache.avro.generic.GenericData;
+import org.apache.commons.lang.StringUtils;
+import sun.net.util.IPAddressUtil;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+
 public class CanalConf {
 
     private String zkServers;
@@ -107,6 +117,44 @@ public class CanalConf {
             return false;
         } else {
             return true;
+        }
+    }
+
+    public static List<SocketAddress> convertUrlsToSocketAddressList(String serverUrls) throws ServerUrlsFormatException {
+        List<SocketAddress> addresses = new ArrayList<>();
+
+        if (StringUtils.isNotEmpty(serverUrls)) {
+            for (String serverUrl : serverUrls.split(",")) {
+                if (StringUtils.isNotEmpty(serverUrl)) {
+                    try {
+                        addresses.add(convertUrlToSocketAddress(serverUrl));
+                    } catch (Exception exception) {
+                        throw new ServerUrlsFormatException(String.format("The serverUrls are malformed . The ServerUrls : \"%s\" .", serverUrls), exception);
+                    }
+                }
+            }
+            return addresses;
+        } else {
+            return addresses;
+        }
+    }
+
+    public static SocketAddress convertUrlToSocketAddress(String serverUrl) throws ServerUrlsFormatException, NumberFormatException {
+
+        String[] hostAndPort = serverUrl.split(":");
+
+        if (hostAndPort.length == 2 && StringUtils.isNotEmpty(hostAndPort[1])) {
+            try {
+
+                int port  = Integer.parseInt(hostAndPort[1]);
+                InetSocketAddress socketAddress = new InetSocketAddress(hostAndPort[0], port);
+                return socketAddress;
+
+            } catch (NumberFormatException exception) {
+                throw exception;
+            }
+        } else {
+            throw new ServerUrlsFormatException(String.format("The serverUrl is malformed . The ServerUrl : \"%s\" .", serverUrl));
         }
     }
 
