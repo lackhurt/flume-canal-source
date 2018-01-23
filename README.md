@@ -48,18 +48,14 @@ agent.sources.canalSource.type = com.weiboyi.etl.flume.source.canal.CanalSource
 
 - 配置连接 canal 的三种方式*
 
-
-1. zookeeper servers
 ```properties
+# 1. zookeeper servers
 agent.sources.canalSource.zkServers = zookeeper-host:2181
-```
 
-2. canal server urls
-```properties
+# 2. canal server urls
 agent.sources.canalSource.serverUrls = canal-server1:111111,canal-server2:111111
-```
-3. canal server urls
-```properties
+
+# 3. canal server urls
 agent.sources.canalSource.serverUrl = canal-server1:111111
 ```
 
