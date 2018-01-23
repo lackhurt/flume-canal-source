@@ -53,13 +53,13 @@ public class CanalSource extends AbstractPollableSource
 
     @Override
     protected void doStop() throws FlumeException {
-        LOGGER.info("stop...");
+        LOGGER.trace("stop...");
         this.canalClient.stop();
     }
 
     @Override
     protected void doConfigure(Context context) throws FlumeException {
-        LOGGER.info("configure...");
+        LOGGER.trace("configure...");
 
         canalConf.setServerUrl(context.getString(CanalSourceConstants.SERVER_URL));
         canalConf.setServerUrls(context.getString(CanalSourceConstants.SERVER_URLS));
@@ -83,9 +83,7 @@ public class CanalSource extends AbstractPollableSource
     @Override
     protected Status doProcess() throws EventDeliveryException {
         try {
-//            LOGGER.info(String.format("Fetch rows from canal, batch size is %d", canalConf.getBatchSize()));
             Message message = canalClient.fetchRows(canalConf.getBatchSize());
-//            LOGGER.info("Fetch successfully");
 
             if (message != null) {
                 try {
@@ -99,7 +97,7 @@ public class CanalSource extends AbstractPollableSource
                 }
 
                 this.canalClient.ack(message.getId());
-                LOGGER.info(String.format("Canal ack ok, batch id is %d", message.getId()));
+                LOGGER.trace(String.format("Canal ack ok, batch id is %d", message.getId()));
                 return Status.READY;
             } else {
                 return Status.BACKOFF;
