@@ -17,8 +17,9 @@ specific language governing permissions and limitations
 under the License.
 -->
 # flume-canal-source
-Flume NG Canal source
+**Flume version : 1.7.0**
 
+**Canal version : 1.0.24**
 ## flume 是什么
 https://flume.apache.org/
 > Flume is a distributed, reliable, and available service for efficiently collecting, aggregating, and moving large amounts of log data. It has a simple and flexible architecture based on streaming data flows. It is robust and fault tolerant with tunable reliability mechanisms and many failover and recovery mechanisms. It uses a simple extensible data model that allows for online analytic application.
@@ -33,25 +34,52 @@ flume-canal-source 是对flume的source扩展。从canal获取数据到flume cha
 进而可以实现binlog数据到kafka/hdfs/hive/elasticsearch等等。
 
 ## 如何使用
+部署 canal，flume 这里忽略。
 
-下面是flume - source 配置
+### 配置 flume
+
+- 配置 source 类型*
 ```properties
 agent.sources = canalSource
 
 agent.sources.canalSource.type = com.weiboyi.etl.flume.source.canal.CanalSource
+```
+
+- 配置连接 canal 的三种方式*
 
 
-# zookeeper servers
-agent.sources.canalSource.zkServers = zookeeperhost:2181
+1. canal zookeeper servers
+```properties
+agent.sources.canalSource.zkServers = zookeeper-host:2181
+```
 
-# canal destination
-agent.sources.canalSource.destination = destination
+2. canal server urls
+```properties
+agent.sources.canalSource.serverUrls = canal-server1:111111,canal-server2:111111
+```
+3. canal server urls
+```properties
+agent.sources.canalSource.serverUrl = canal-server1:111111
+```
 
-# agent.sources.canalSource.username = user
-# agent.sources.canalSource.password = passwd
 
-# binlog batch size, default is 1024
+- 配置 canal destination*
+```properties
+agent.sources.canalSource.destination = example
+```
+
+- 配置用户名密码
+```properties
+agent.sources.canalSource.username = user
+agent.sources.canalSource.password = passwd
+```
+
+- binlog batch size, default 1024
+```properties
 agent.sources.canalSource.batchSize = 1024
+```
 
-# 是否需要修改前的数据
+- 是否需要 MySQL 修改前的数据, default true
+```properties
 agent.sources.canalSource.oldDataRequired = true
+```
