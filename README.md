@@ -32,6 +32,7 @@ https://github.com/alibaba/canal
 ## flume-canal-source 做了什么
 flume-canal-source 是对flume的source扩展。从canal获取数据到flume channel。
 进而可以实现binlog数据到kafka/hdfs/hive/elasticsearch等等。
+canal 和 flume 都有高可用的解决方案，这种方式同步 binlog 可用性非常高。
 
 ## 如何使用
 部署 canal，flume 这里忽略。
