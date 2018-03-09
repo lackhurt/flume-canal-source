@@ -102,6 +102,12 @@ public class CanalEntryChannelEventConverter {
                     Map<String, String> header = new HashMap<String, String>();
                     header.put("table", entry.getHeader().getTableName());
 
+                    if (null != eventMap.get("pk")) {
+                        header.put("key", eventMap.get("pk").toString());
+                    } else {
+                        header.put("key", "");
+                    }
+
                     header.put("numInTransaction", String.valueOf(CanalEntryChannelEventConverter.numberInTransaction));
 
                     events.add(EventBuilder.withBody(gson.toJson(eventMap, new TypeToken<Map<String, Object>>(){}.getType()).getBytes(Charset.forName("UTF-8")), header));
